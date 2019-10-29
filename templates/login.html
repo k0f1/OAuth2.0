@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--PRE-REQUISITES -->
+
+    <!--LOAD GOOGLE PLATFORM LIBRARY -->
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+    <!--SPECIFY YOUR APP'S CLIENT ID -->
+    <meta name="google-signin-client_id" content="377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com">
+
+
+    <!--END PRE-REQUISITES FOR GOOGLE SIGN IN -->
+  </head>
+
+  <body>
+
+    <!--ADD A GOOGLE SIGN IN BUTTON AND GET PROFILE INFO-->
+        <div class="g-signin2">
+          <span class="g-signin2"
+            data-onsuccess="onSignIn"
+            data-onfailure="onSignInFailure"
+            data-scope="openid email"
+            data-redirecturi="postmessage"
+            data-accesstype="offline"
+            data-cookiepolicy="single_host_origin"
+            data-callback="signInCallback"
+            data-approvalprompt="force">
+          </span>
+        </div>
+
+
+
+
+  <!--END GOOGLE SIGN IN BUTTON -->
+
+
+  </body>
+</html>

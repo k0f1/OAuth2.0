@@ -9,6 +9,7 @@ from database_setup import Base, Restaurant, MenuItem
 
 # NEW IMPORTS FOR THIS STEP
 from flask import session as login_session
+# As keyword b/c we already used the variable session my database sqlalchemy.
 import random, string
 
 #Connect to Database and create database session
@@ -18,13 +19,19 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-
+# Create ant-forgery state token
 @app.route('/login')
 def showLogin():
+    # This method creates a unique session token with
+    # each GET request sent to localhost:5000/login.
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
         for x in xrange(32))
+        # state is a random mixed 32 character long string.
+        # Store state from our login_session(a dict) in a variable state.
     login_session['state'] = state
-    return "The current session state is %s" %login_session['state']
+    # return "The current session state is %s" %login_session['state']
+    # RENDER THE LOGIN TEMPLATE
+    return render_template('login.html')
 
 
 #JSON APIs to view Restaurant Information
