@@ -1,38 +1,123 @@
 <!DOCTYPE html>
 <html>
+<!--AUTHENTICATION: To identify who the user is
+  AUTHORIZATION: To get a permisssion to access an API on behalf of the user-->
   <head>
-    <!--PRE-REQUISITES -->
-
-    <!--LOAD GOOGLE PLATFORM LIBRARY -->
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-
-    <!--SPECIFY YOUR APP'S CLIENT ID -->
-    <meta name="google-signin-client_id" content="377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com">
+    <!-- BEGIN Pre-requisites -->
+   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+   </script>
+   <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
+   </script>
 
 
-    <!--END PRE-REQUISITES FOR GOOGLE SIGN IN -->
+
+    <!-- END Pre-requisites -->
+
+    <!-- Continuing the <head> section -->
+
+    <!-- Initialize the GoogleAuth object -->
+    <script>
+    function start() {
+      gapi.load('auth2', function() {
+        auth2 = gapi.auth2.init({
+          client_id: '377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com',
+          // Scopes to request in addition to 'profile' and 'email'
+          //scope: 'additional_scope'
+          data-scope="openid email"
+          data-redirecturi="postmessage"
+          data-accesstype="offline"
+          data-cookiepolicy="single_host_origin"
+          data-callback="signInCallback"
+          data-approvalprompt="force">
+        });
+      });
+    }
+  </script>
+
+   <meta name="google-signin-client_id" content="377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com">
+
   </head>
 
   <body>
+    <!--ADD THE SIGN-IN BUTTON TO YOUR PAGE -->
+    <div id="signinButton"><span class="g-signin2"></span></div>
 
-    <!--ADD A GOOGLE SIGN IN BUTTON AND GET PROFILE INFO-->
-        <div id="signinButton">
-          <span class="g-signin2"
-            data-onsuccess="onSignIn"
-            data-onfailure="onSignInFailure"
-            data-scope="openid email"
-            data-redirecturi="postmessage"
-            data-accesstype="offline"
-            data-cookiepolicy="single_host_origin"
-            data-callback="signInCallback"
-            data-approvalprompt="force">
-          </span>
-        </div>
+    <script>
+      $('#signinButton').click(function() {
+      // signInCallback defined in step 6.
+      auth2.grantOfflineAccess().then(signInCallback);
+    });
+    </script>
+
+    <!--SIGN IN THE User
+     The user clicks the sign-in button and grants your app access to the permissions that you requested. Then, the callback function that you specified in the grantOfflineAccess().then() method is passed a JSON object with an authorization code. For example: {"code":"4/yU4cQZTMnnMtetyFcIWNItG32eKxxxgXXX-Z4yyJJJo.4qHskT-UtugceFc0ZRONyF4z7U4UmAI"} -->
+
+  <!--SEND THE AUTHORIZATION CODE TO THE SERVER-->
+  <!--When you authenticate with backend, you deal with something called ID Token. It contains the
+    issuer of this Token,
+    Audience: which App is it for
+    Exp date:
+    'sub': The subject sub contains the User ID primary key
+  You obtain ID token upon succesful authentication and then send it to the server-->
+
+
+  <!--Create an empty div named result that we can populate with a response method -/gconnet -->
+    <div id="result"></div>
+
+    <!-- Last part of BODY element in file login.html -->
+<script>
+// Define a sign-in callback function that takes in an authResult
+// object as input.
+function signInCallback(authResult) {
+  if (authResult['code']) {
+    // If the object authResult contains a parameter called code,
+    // Then we know that our one time code is present
+
+    // Hide the sign-in button now that the user is authorized, for example:
+    $('#signinButton').attr('style', 'display: none');
+
+    // Send the code to the server
+    // Use jQuery to create an Ajax call
+    $.ajax({
+      type: 'POST',
+      url: '/gconnect?state={{STATE}}',
+      // Always include an `X-Requested-With` header in every AJAX request,
+      // to protect against CSRF attacks.
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      contentType: 'application/octet-stream; charset=utf-8',
+      success: function(result) {
+        // Handle or verify the server response.
+
+        // Call this anonymous function with result as input.
+        // When we receive a 200 OK from our server
+        if (result) {
+          // Return this successful message to the user, then redirect
+          // to the main restaurant's page after about four seconds.
+          $('#result').html('login successful!</br>' + result +
+            '</br>Redirecting...')
+          setTimeOut(function() {
+            window.location.href ="/restaurant";
+          }, 4000);
+
+      },
+    }
+      processData: false,
+      data: authResult['code']
+    });
+  } else if (authResult['error']){
+    // There was an error.
+      console.log('There was an error: ' + authresult['error']);
+  } else {
+    // Failed server side call
+      $('#result').html('Failed to make a server side call. Check your configuration and console.');
+  }
+}
+</script>
 
 
 
-
-  <!--END GOOGLE SIGN IN BUTTON -->
 
 
   </body>

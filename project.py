@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 from flask import Flask, render_template, request, redirect,jsonify, url_for, flash
-app = Flask(__name__)
 
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
@@ -11,6 +10,28 @@ from database_setup import Base, Restaurant, MenuItem
 from flask import session as login_session
 # As keyword b/c we already used the variable session my database sqlalchemy.
 import random, string
+
+
+#IMPORTS FOR THIS STEP
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import FlowExchangeError
+from oauth2client import client
+import httplib2
+import json
+# To convert in-memory Python objects to serialised
+# representation, known as Java Script Object Notation.
+from flask import make_response
+import requests
+
+app = Flask(__name__)
+
+
+# DECLARE MY CLIENT ID BY REFERENCING THE CLIENT SECRETS FILE
+CLIENT_ID = json.loads(
+    open('client_secrets.json', 'r').read())['web']['client_id']
+APPLICATION_NAME = "Restaurant Menu Application"
+
+
 
 #Connect to Database and create database session
 engine = create_engine('sqlite:///restaurantmenu.db')
@@ -31,7 +52,114 @@ def showLogin():
     login_session['state'] = state
     # return "The current session state is %s" %login_session['state']
     # RENDER THE LOGIN TEMPLATE
-    return render_template('login.html')
+    # STATE=state was later added after being created in login.html
+    return render_template('login.html', STATE=state)
+
+
+# HANDLER OF CODE SENT BACK FROM CALLBACK METHOD
+@app.route('/gconnect', methods=['POST'])
+def gconnect():
+    # If this request does not have `X-Requested-With` header, this could be a CSRF
+    if not request.headers.get('X-Requested-With'):
+        abort(403)
+    # If this request does not have `X-Requested-With` header, this could be a CSRF
+    # Using the request.args.get method, my code examines the state
+    # token passed in and compares it to the state of the login session.
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('invalid state token'), 401)
+        response.headers['content-Type'] = 'application/json'
+        return response
+    # If this statement is not True ie there is a match
+    # Collect one time code from my server with the request.data function
+    code = request.data
+    # If this request does not have `X-Requested-With` header, this could be a CSRF
+    try:
+        # Upgrade the authorization code into a crednetials object
+        oauth_flow = flow_from_clientsecrets('client_secrets.json',
+            scope='')
+        oauth_flow.redirect_uri = 'postmessage'
+        credentials = oauth_flow.step2_exchange(code)
+    # If an error happen along the way
+    except FlowExchangeError:
+        response = make_response(json.dumps('Failed to upgrade the authorization code.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Check that the access token is valid.
+    access_token = credentials.access_token
+    url = ('https:/www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
+          % access_token)
+    h = httplib2.Http()
+    result = json.loads(h.request(url, 'GET') [1])
+
+    # If there was an error in the access token info, abort
+    # if x is not None:
+        # # Do something about x
+    if result.get('error') is not None:
+        response = make_response(json.dumps(result.get('error')), 500)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Get profile info from ID token
+    userid = credentials.id_token['sub']
+    if result[userid] != userid:
+        response = make_response(
+            json.dumps("Token's user ID doesn't match given user ID."), 401
+        )
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    email = credentials.id_token['email']
+    if result[email] != email:
+        response = make_response(
+            json.dumps("Token's email doesn't match given user email."), 401
+        )
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is valid for this app.
+    if result['issued_to'] != CLIENT_ID:
+        response = make_response(
+            json.dumps("token's client ID does not match the app's."), 401
+        )
+        print "Token's client ID does not match apps."
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Check to see if the user is already logged in
+    stored_access_token = login_session.get('access_token')
+    stored_userid = login_session.get('userid')
+    if stored_access_token is not None and userid == stored_userid:
+        response = make_response(json.dumps('Current  user is already connected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Store the access token in the session for later use.
+    login_session['access_token'] = credentials.access_token
+    login_session['userid'] = userid
+
+    # Get user info
+    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+    params = {'access_token': credentials.access_token, 'alt': 'json'}
+    answer = requests.get(userinfo_url, params=params)
+
+    data = answer.json()
+
+    login_session['username'] = data['name']
+    login_session['picture'] = data['picture']
+    login_session['email'] = data['email']
+
+    output = ''
+    output += '<h1>Welcome, '
+    output += login_session['username']
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    flash("you are now logged in as %s" % login_session['username'])
+    print "done!"
+    return output
+
 
 
 #JSON APIs to view Restaurant Information
