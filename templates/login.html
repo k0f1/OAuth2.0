@@ -1,127 +1,60 @@
+<!--Updated Google Sign-In-->
 <!DOCTYPE html>
 <html>
-<!--AUTHENTICATION: To identify who the user is
-  AUTHORIZATION: To get a permisssion to access an API on behalf of the user-->
 <head>
-    <!-- BEGIN Pre-requisites -->
-   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
-   </script>
-   <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
-   </script>
-    <!-- END Pre-requisites -->
-    <meta name="google-signin-client_id" content="377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com">
-
-
-    <script>
-      //INITIALIZE THE GOOGLEAUTH OBJECT
-
-      //By loading auth2 lib
-      // and call gapi.auth2.init()
-      function start() {
-        gapi.load('auth2', function() {
-          auth2 = gapi.auth2.init({
-            client_id: '377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com',
-            // Scopes to request in addition to 'profile' and 'email'
-            //scope: 'additional_scope'
-            scope: 'openid profile email',
-            redirect_uri: 'postmessage',
-            callback: 'signInCallback',
-          });
+  <!--  Step 1: Include the below scripts in login.html <head>..</head> tag -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+  <script>
+    function start() {
+      gapi.load('auth2', function() {
+        auth2 = gapi.auth2.init({
+          client_id: '377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com'
         });
-      }
-    </script>
-
-
-
+      });
+    }
+  </script>
 </head>
 
-
 <body>
-    <!-- Add sign in button -->
-  <div id "signinButton"><span class='g-signin2'></span></div>
 
-<script>
-  //The user clicks the sign-in button and
-  //grants your app access to the permissions
-  //that you requested. Then, the callback function
-  //that you specified in the grantOfflineAccess().then()
-  //method is passed a JSON object with an authorization code.
-  $('#signinButton').click(function() {
-    // signInCallback defined in step 6.
-    auth2.grantOfflineAccess().then(signInCallback);
-  });
-</script>
-<!--END OF AUTHENTICATION CODE-->
-
-
-
-
-
-  <!--SEND THE AUTHORIZATION CODE TO THE SERVER-->
-  <!--When you authenticate with backend,
-   you deal with something called ID Token. -->
-
-
-  <!--Create an empty div named result that we can populate with a response method -/gconnet -->
-    <div id="result"></div>
-
-    <!-- Last part of BODY element in file login.html -->
-<script>
-// Define a sign-in callback function that takes in an authResult
-// object as input.
-function signInCallback(authResult) {
-  if (authResult['code']) {
-    // If the object authResult contains a parameter called code,
-    // Then we know that our one time code is present
-
-    // Hide the sign-in button now that the user is authorized, for example:
-    $('#signinButton').attr('style', 'display: none');
-
-    // Send the code to the server
-    // Use jQuery to create an Ajax call
-    $.ajax({
-      type: 'POST',
-      url: '/gconnect?state={{STATE}}',
-      // Always include an `X-Requested-With` header in every AJAX request,
-      // to protect against CSRF attacks.
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      contentType: 'application/octet-stream; charset=utf-8',
-      success: function(result) {
-        // Handle or verify the server response.
-
-        // Call this anonymous function with result as input.
-        // When we receive a 200 OK from our server
-        if (result) {
-          // Return this successful message to the user, then redirect
-          // to the main restaurant's page after about four seconds.
-          $('#result').html('login successful!</br>' + result +
-              '</br>Redirecting...')
-          setTimeOut(function() {
-            window.location.href ="/restaurant";
-          }, 4000);
-
+  <!--  Step 2: In the <body> tag, add the below button and div -->
+  <button id="signinButton">Sign in with Google</button>
+  <divid="result"></div>
+  <!--  Step 3: Add the below script before the ending </body> tag -->
+  <script>
+    $('#signinButton').click(function() {
+      function signInCallback(authResult){
+        if (authResult['code']){
+          $('#signinButton').attr('style', 'display: none');
+          $.ajax({
+            type: 'POST',
+            url: '/gconnect?state={{STATE}}',
+            headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+            },
+            contentType: 'application/octet-stream; charset=utf-8',
+            success:function(result){
+              $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+                   setTimeout(function() {
+                    window.location.href = "/";
+                   }, 2000);
+            },
+            processData:false,
+            data:authResult['code']
+          });
+        } else{
+          // handle error
+          console.log('There was an error: ' + authResult['error']);
+          $('#result').html('Failed to make a server-side call. Check your configuration and console.');
         }
-
-      },
-      processData: false,
-      data: authResult['code']
+      }
+      auth2.grantOfflineAccess().then(signInCallback);
     });
-    } else if (authResult['error']){
-      // There was an error.
-      console.log('There was an error: ' + authresult['error']);
-    } else {
-      // Failed server side call
-      $('#result').html('Failed to make a server side call.
-          Check your   configuration and console.');
-    }
-  }
-</script>
-
-<!--END OF AUTHORIZATION CODE -->
-
-
-
+  </script>
 </body>
+
+
+
+
 </html>

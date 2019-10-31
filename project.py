@@ -15,7 +15,6 @@ import random, string
 #IMPORTS FOR THIS STEP
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
-from oauth2client import client
 import httplib2
 import json
 # To convert in-memory Python objects to serialised
@@ -51,7 +50,6 @@ def showLogin():
         # Store state from our login_session(a dict) in a variable state.
     login_session['state'] = state
     # return "The current session state is %s" %login_session['state']
-    # RENDER THE LOGIN TEMPLATE
     # STATE=state was later added after being created in login.html
     return render_template('login.html', STATE=state)
 
@@ -59,10 +57,6 @@ def showLogin():
 # HANDLER OF CODE SENT BACK FROM CALLBACK METHOD
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
-    # If this request does not have `X-Requested-With` header, this could be a CSRF
-    if not request.headers.get('X-Requested-With'):
-        abort(403)
-    # If this request does not have `X-Requested-With` header, this could be a CSRF
     # Using the request.args.get method, my code examines the state
     # token passed in and compares it to the state of the login session.
     if request.args.get('state') != login_session['state']:
@@ -70,11 +64,11 @@ def gconnect():
         response.headers['content-Type'] = 'application/json'
         return response
     # If this statement is not True ie there is a match
-    # Collect one time code from my server with the request.data function
+    # Obtain authorization code
     code = request.data
-    # If this request does not have `X-Requested-With` header, this could be a CSRF
+
     try:
-        # Upgrade the authorization code into a crednetials object
+        # Upgrade the authorization code into a credentials object
         oauth_flow = flow_from_clientsecrets('client_secrets.json',
             scope='')
         oauth_flow.redirect_uri = 'postmessage'
@@ -90,7 +84,7 @@ def gconnect():
     url = ('https:/www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
           % access_token)
     h = httplib2.Http()
-    result = json.loads(h.request(url, 'GET') [1])
+    result = json.loads(h.request(url, 'GET')[1])
 
     # If there was an error in the access token info, abort
     # if x is not None:
@@ -100,20 +94,11 @@ def gconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    # Get profile info from ID token
-    userid = credentials.id_token['sub']
-    if result[userid] != userid:
+    # Verify that the access token is used for the intended user.
+    gplus_id = credentials.id_token['sub']
+    if result['user_id'] != gplus_id:
         response = make_response(
-            json.dumps("Token's user ID doesn't match given user ID."), 401
-        )
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    email = credentials.id_token['email']
-    if result[email] != email:
-        response = make_response(
-            json.dumps("Token's email doesn't match given user email."), 401
-        )
+            json.dumps("Token's user ID doesn't match given user ID."), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -122,21 +107,21 @@ def gconnect():
         response = make_response(
             json.dumps("token's client ID does not match the app's."), 401
         )
-        print "Token's client ID does not match apps."
+        print "Token's client ID does not match app's."
         response.headers['Content-Type'] = 'application/json'
         return response
 
     # Check to see if the user is already logged in
     stored_access_token = login_session.get('access_token')
-    stored_userid = login_session.get('userid')
-    if stored_access_token is not None and userid == stored_userid:
+    stored_gplus_id = login_session.get('gplus_id')
+    if stored_access_token is not None and gplus_id == stored_gplus_id:
         response = make_response(json.dumps('Current  user is already connected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
     # Store the access token in the session for later use.
     login_session['access_token'] = credentials.access_token
-    login_session['userid'] = userid
+    login_session['gplus_id'] = gplus_id
 
     # Get user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
