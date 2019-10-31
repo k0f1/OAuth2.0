@@ -2,63 +2,64 @@
 <html>
 <!--AUTHENTICATION: To identify who the user is
   AUTHORIZATION: To get a permisssion to access an API on behalf of the user-->
-  <head>
+<head>
     <!-- BEGIN Pre-requisites -->
    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
    </script>
    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
    </script>
-
-
-
     <!-- END Pre-requisites -->
+    <meta name="google-signin-client_id" content="377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com">
 
-    <!-- Continuing the <head> section -->
 
-    <!-- Initialize the GoogleAuth object -->
     <script>
-    function start() {
-      gapi.load('auth2', function() {
-        auth2 = gapi.auth2.init({
-          client_id: '377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com',
-          // Scopes to request in addition to 'profile' and 'email'
-          //scope: 'additional_scope'
-          data-scope="openid email"
-          data-redirecturi="postmessage"
-          data-accesstype="offline"
-          data-cookiepolicy="single_host_origin"
-          data-callback="signInCallback"
-          data-approvalprompt="force">
+      //INITIALIZE THE GOOGLEAUTH OBJECT
+
+      //By loading auth2 lib
+      // and call gapi.auth2.init()
+      function start() {
+        gapi.load('auth2', function() {
+          auth2 = gapi.auth2.init({
+            client_id: '377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com',
+            // Scopes to request in addition to 'profile' and 'email'
+            //scope: 'additional_scope'
+            scope: 'openid profile email',
+            redirect_uri: 'postmessage',
+            callback: 'signInCallback',
+          });
         });
-      });
-    }
-  </script>
-
-   <meta name="google-signin-client_id" content="377693933630-mt7bk2ot1bp6j06773v3n295h12bevpk.apps.googleusercontent.com">
-
-  </head>
-
-  <body>
-    <!--ADD THE SIGN-IN BUTTON TO YOUR PAGE -->
-    <div id="signinButton"><span class="g-signin2"></span></div>
-
-    <script>
-      $('#signinButton').click(function() {
-      // signInCallback defined in step 6.
-      auth2.grantOfflineAccess().then(signInCallback);
-    });
+      }
     </script>
 
-    <!--SIGN IN THE User
-     The user clicks the sign-in button and grants your app access to the permissions that you requested. Then, the callback function that you specified in the grantOfflineAccess().then() method is passed a JSON object with an authorization code. For example: {"code":"4/yU4cQZTMnnMtetyFcIWNItG32eKxxxgXXX-Z4yyJJJo.4qHskT-UtugceFc0ZRONyF4z7U4UmAI"} -->
+
+
+</head>
+
+
+<body>
+    <!-- Add sign in button -->
+  <div id "signinButton"><span class='g-signin2'></span></div>
+
+<script>
+  //The user clicks the sign-in button and
+  //grants your app access to the permissions
+  //that you requested. Then, the callback function
+  //that you specified in the grantOfflineAccess().then()
+  //method is passed a JSON object with an authorization code.
+  $('#signinButton').click(function() {
+    // signInCallback defined in step 6.
+    auth2.grantOfflineAccess().then(signInCallback);
+  });
+</script>
+<!--END OF AUTHENTICATION CODE-->
+
+
+
+
 
   <!--SEND THE AUTHORIZATION CODE TO THE SERVER-->
-  <!--When you authenticate with backend, you deal with something called ID Token. It contains the
-    issuer of this Token,
-    Audience: which App is it for
-    Exp date:
-    'sub': The subject sub contains the User ID primary key
-  You obtain ID token upon succesful authentication and then send it to the server-->
+  <!--When you authenticate with backend,
+   you deal with something called ID Token. -->
 
 
   <!--Create an empty div named result that we can populate with a response method -/gconnet -->
@@ -96,29 +97,31 @@ function signInCallback(authResult) {
           // Return this successful message to the user, then redirect
           // to the main restaurant's page after about four seconds.
           $('#result').html('login successful!</br>' + result +
-            '</br>Redirecting...')
+              '</br>Redirecting...')
           setTimeOut(function() {
             window.location.href ="/restaurant";
           }, 4000);
 
+        }
+
       },
-    }
       processData: false,
       data: authResult['code']
     });
-  } else if (authResult['error']){
-    // There was an error.
+    } else if (authResult['error']){
+      // There was an error.
       console.log('There was an error: ' + authresult['error']);
-  } else {
-    // Failed server side call
-      $('#result').html('Failed to make a server side call. Check your configuration and console.');
+    } else {
+      // Failed server side call
+      $('#result').html('Failed to make a server side call.
+          Check your   configuration and console.');
+    }
   }
-}
 </script>
 
+<!--END OF AUTHORIZATION CODE -->
 
 
 
-
-  </body>
+</body>
 </html>
