@@ -2,9 +2,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--  Step 1: Include the below scripts in login.html <head>..</head> tag -->
+  <!-- BEGIN Pre-requisites -->
+
+
+  <!--  Step 1: Include the below script in the head tag-->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+
+  <!-- END Pre-requisites -->
+
+
   <script>
     function start() {
       gapi.load('auth2', function() {
@@ -20,16 +27,22 @@
 
   <!--  Step 2: In the <body> tag, add the below button and div -->
   <button id="signinButton">Sign in with Google</button>
-  <divid="result"></div>
+  <div id="result"></div>
   <!--  Step 3: Add the below script before the ending </body> tag -->
   <script>
     $('#signinButton').click(function() {
       function signInCallback(authResult){
         if (authResult['code']){
+          // If the object authResult contains a parameter called code,
+          // Then we know that our one time code is present
+
+          //Hide the sign-in button now that the user is authorized
           $('#signinButton').attr('style', 'display: none');
           $.ajax({
             type: 'POST',
             url: '/gconnect?state={{STATE}}',
+            // Always include an `X-Requested-With` header in every AJAX request,
+            // to protect against CSRF attacks.
             headers: {
             'X-Requested-With': 'XMLHttpRequest'
             },
