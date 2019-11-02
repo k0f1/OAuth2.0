@@ -26,7 +26,7 @@ app = Flask(__name__)
 
 
 # DECLARE MY CLIENT ID BY REFERENCING THE CLIENT SECRETS FILE
-CLIENT_ID = json.loads(
+client_id = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Restaurant Menu Application"
 
@@ -81,8 +81,11 @@ def gconnect():
 
     # Check that the access token is valid.
     access_token = credentials.access_token
-    url = ('https:/www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
+    #Append this token to the following url
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
           % access_token)
+          #Create a json GET request with these two lines,
+          # containing the url and access_token
     h = httplib2.Http()
     result = json.loads(h.request(url, 'GET')[1])
 
@@ -103,7 +106,7 @@ def gconnect():
         return response
 
     # Verify that the access token is valid for this app.
-    if result['issued_to'] != CLIENT_ID:
+    if result['issued_to'] != client_id:
         response = make_response(
             json.dumps("token's client ID does not match the app's."), 401
         )
