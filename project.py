@@ -26,7 +26,7 @@ app = Flask(__name__)
 
 
 # DECLARE MY CLIENT ID BY REFERENCING THE CLIENT SECRETS FILE
-CLIENT_ID = json.loads(
+client_id = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Restaurant Menu Application"
 
