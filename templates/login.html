@@ -40,6 +40,7 @@
           $('#signinButton').attr('style', 'display: none');
           $.ajax({
             type: 'POST',
+            //Endpoint/Address
             url: '/gconnect?state={{STATE}}',
             // Always include an `X-Requested-With` header in every AJAX request,
             // to protect against CSRF attacks.

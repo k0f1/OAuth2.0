@@ -26,7 +26,7 @@ app = Flask(__name__)
 
 
 # DECLARE MY CLIENT ID BY REFERENCING THE CLIENT SECRETS FILE
-client_id = json.loads(
+CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Restaurant Menu Application"
 
@@ -38,6 +38,7 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
 
 # Create ant-forgery state token
 @app.route('/login')
@@ -60,11 +61,13 @@ def gconnect():
     # Using the request.args.get method, my code examines the state
     # token passed in and compares it to the state of the login session.
     if request.args.get('state') != login_session['state']:
+        # If there is mismatch
         response = make_response(json.dumps('invalid state token'), 401)
         response.headers['content-Type'] = 'application/json'
         return response
-    # If this statement is not True ie there is a match
-    # Obtain authorization code
+    # If there is a match
+    # Obtain authorization code from my server with request data function
+    # Request is variable that holds data and information about code
     code = request.data
 
     try:
@@ -147,6 +150,40 @@ def gconnect():
     flash("you are now logged in as %s" % login_session['username'])
     print "done!"
     return output
+
+
+# DISCONNECT - Revoke a current user's token and reset their login_session
+@app.route('/gdisconnect')
+def gdisconnect():
+    # Only disconnect a connected user.
+    access_token = login_session.get('access_token')
+    if access_token is None:
+        print 'Access Token is None'
+        response = make_response(json.dumps('Current user not connected.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    print 'In gdisconnect access token is %s', access_token
+    print 'User name is: '
+    print login_session['username']
+    # Execute HTTP GET request to revoke current token.
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[0]
+    print 'result is '
+    print result
+    if result['status'] == '200':
+        del login_session['access_token']
+        del login_session['gplus_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        response = make_response(json.dumps('Successfully disconnected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    else:
+        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 
 
