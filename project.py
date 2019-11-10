@@ -55,6 +55,8 @@ def showLogin():
     return render_template('login.html', STATE=state)
 
 
+#####
+
 # FACEBOOK SIGN IN
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
@@ -64,12 +66,13 @@ def fbconnect():
         return response
     access_token = request.data
     print "access token received %s " % access_token
-    # Below, exchange client token for long-lived server side token
+    # Below, exchange the short-lived token for a long-lived server side token
     # with GET /oauth/access_token?grant_type=fb_exchange_token&client_id=
     # {app-id}&client_secret={app-secret}&fb_exchange_token={short-lived-token}
     app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
         'web']['app_id']
     app_secret = json.loads( # I have to send my app secret to Facebook
+        # to verify my identity.
         open('fb_client_secrets.json', 'r').read())['web']['app_secret']
     url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
         app_id, app_secret, access_token)
@@ -88,7 +91,7 @@ def fbconnect():
     '''
     token = result.split(',')[0].split(':')[1].replace('"', '')
 
-    url = 'https://graph.facebook.com/v2.8/me?access_token=%s&fields=name,id,email' % token
+    url = 'https://graph.facebook.com/v2.8/ me?access_token=%s&fields=name,id,email' % token
 
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
@@ -146,7 +149,7 @@ def fbdisconnect():
     del login_session['facebook_id']
     return "you have been logged out"
 
-
+#####
 
 
 
