@@ -1,7 +1,10 @@
-<!--Updated Google Sign-In-->
-<!DOCTYPE html>
-<html>
-<head>
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+
+{% block head %}
+
   <!-- BEGIN Pre-requisites -->
 
 
@@ -21,9 +24,9 @@
       });
     }
   </script>
-</head>
+{% endblock %}
 
-<body>
+{% block body %}
 
   <!--  Step 2: In the <body> tag, add the below button and div -->
   <button id="signinButton">Login with Google</button>
@@ -96,7 +99,7 @@
 
 
   function sendTokenToServer() {
-    // This function below retreives my short-lived accessToken. 
+    // This function below retreives my short-lived accessToken.
     var access_token = FB.getAuthResponse()['accessToken']; // Retreives
     console.log(access_token)
     console.log('Welcome!  Fetching your information.... ');
@@ -143,8 +146,6 @@
 
   </button>
 <!--END FACEBOOK SIGN IN -->
+{% endblock %}
 
-
-</body>
-
-</html>
+{% endblock %}
