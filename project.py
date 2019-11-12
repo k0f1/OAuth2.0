@@ -528,7 +528,7 @@ def deleteMenuItem(restaurant_id,menu_id):
         return render_template('deleteMenuItem.html', item = itemToDelete)
 
 
-# Disconnect based on provider
+# Revoking access with user based on provider
 @app.route('/disconnect')
 def disconnect():
     if 'provider' in login_session:
